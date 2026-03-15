@@ -147,7 +147,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(formData)
             });
 
-            if (!response.ok) throw new Error('Network error');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Network error');
+            }
 
             await response.json(); // Log saved
             
@@ -160,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error("Submit Error:", error);
-            alert("Could not log entry!");
+            alert(error.message);
         } finally {
             btnText.classList.remove('hidden');
             loader.classList.add('hidden');

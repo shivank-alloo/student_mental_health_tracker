@@ -5,6 +5,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 import models
 import schemas
 import auth
+import datetime
 from database import engine, get_db
 from predictor import predict_burnout
 
@@ -52,6 +53,18 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
 
 @app.post("/entries/", response_model=schemas.DailyEntryResponse)
 def create_entry(entry: schemas.DailyEntryCreate, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    today_start = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = today_start + datetime.timedelta(days=1)
+    
+    existing_entry = db.query(models.DailyEntry).filter(
+        models.DailyEntry.user_id == current_user.id,
+        models.DailyEntry.date >= today_start,
+        models.DailyEntry.date < today_end
+    ).first()
+    
+    if existing_entry:
+        raise HTTPException(status_code=400, detail="You have already logged your data for today.")
+
     burnout_risk, productivity_score, suggestions = predict_burnout(
         entry.study_hours,
         entry.sleep_hours,
