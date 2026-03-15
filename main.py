@@ -53,25 +53,20 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
 
 @app.post("/entries/", response_model=schemas.DailyEntryResponse)
 def create_entry(entry: schemas.DailyEntryCreate, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
-    # Restrict logging to evening/night before sleep (between 8 PM and 4 AM)
-    current_time = datetime.datetime.now()
-    if 4 <= current_time.hour < 20:
-        raise HTTPException(
-            status_code=400, 
-            detail="To maintain data accuracy, please only log your daily data right before sleeping (between 8:00 PM and 4:00 AM)."
-        )
-
     today_start = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = today_start + datetime.timedelta(days=1)
     
-    existing_entry = db.query(models.DailyEntry).filter(
+    # Check for existing entry today (Upsert logic)
+    db_entry = db.query(models.DailyEntry).filter(
         models.DailyEntry.user_id == current_user.id,
         models.DailyEntry.date >= today_start,
         models.DailyEntry.date < today_end
     ).first()
     
-    if existing_entry:
-        raise HTTPException(status_code=400, detail="You have already logged your data for today.")
+    # If entry exists, update it, otherwise create new
+    if not db_entry:
+        db_entry = models.DailyEntry(user_id=current_user.id)
+        db.add(db_entry)
 
     burnout_risk, productivity_score, suggestions = predict_burnout(
         entry.study_hours,
@@ -83,14 +78,14 @@ def create_entry(entry: schemas.DailyEntryCreate, db: Session = Depends(get_db),
         entry.sleep_quality
     )
 
-    db_entry = models.DailyEntry(
-        **entry.dict(),
-        user_id=current_user.id,
-        burnout_risk=burnout_risk,
-        productivity_score=productivity_score,
-        suggestions=suggestions
-    )
-    db.add(db_entry)
+    # Update all fields
+    for key, value in entry.dict().items():
+        setattr(db_entry, key, value)
+        
+    db_entry.burnout_risk = burnout_risk
+    db_entry.productivity_score = productivity_score
+    db_entry.suggestions = suggestions
+    
     db.commit()
     db.refresh(db_entry)
     return db_entry
@@ -99,3 +94,14 @@ def create_entry(entry: schemas.DailyEntryCreate, db: Session = Depends(get_db),
 def get_entries(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
     entries = db.query(models.DailyEntry).filter(models.DailyEntry.user_id == current_user.id).order_by(models.DailyEntry.date.desc()).offset(skip).limit(limit).all()
     return entries
+
+@app.get("/entries/insights")
+def get_insights(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    # Get last 14 days of history for analysis
+    history = db.query(models.DailyEntry).filter(
+        models.DailyEntry.user_id == current_user.id
+    ).order_by(models.DailyEntry.date.desc()).limit(14).all()
+    
+    from predictor import study_user_trends
+    insights = study_user_trends(history)
+    return {"insights": insights}

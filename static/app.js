@@ -98,7 +98,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function initDashboard() {
         await fetchEntries();
+        await fetchInsights();
         updateDashboardWidgets();
+    }
+
+    async function fetchInsights() {
+        try {
+            const response = await fetch(`${API_URL}/entries/insights`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('insights-container').innerHTML = `<p class="suggestion-text">${data.insights}</p>`;
+            }
+        } catch (e) { console.error("Insights Error:", e); }
     }
 
     // --- API Fetching ---
@@ -136,7 +149,8 @@ document.addEventListener('DOMContentLoaded', () => {
             sleep_bedtime: document.getElementById('sleep-bedtime').value,
             sleep_quality: parseInt(document.getElementById('sleep-quality').value, 10),
             phone_usage_hours: parseFloat(document.getElementById('phone-hours').value),
-            stress_level: parseInt(document.getElementById('stress-level').value, 10)
+            stress_level: parseInt(document.getElementById('stress-level').value, 10),
+            comment: document.getElementById('comment').value
         };
 
         try {

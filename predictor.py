@@ -49,31 +49,34 @@ def calculate_productivity_score(study_hours, sleep_hours, phone_hours, stress_l
     return max(0, min(100, p_score))
 
 def generate_personalized_plan(productivity_score, sleep_hours, sleep_quality, sleep_bedtime):
+    from datetime import datetime
+    current_hour = datetime.now().hour
     plan = []
     
-    # Analyze sleep
-    if sleep_quality and sleep_quality < 3:
-        plan.append("🌅 Morning: Gentle start. Your sleep quality was low. Avoid heavy caffeine first thing.")
-    else:
-        plan.append("🌅 Morning: Focus block. Direct your peak energy into your hardest subject.")
-        
-    if productivity_score > 70:
-        plan.append("🏫 Afternoon: Deep work session. You're in a high productivity cycle.")
-    else:
-        plan.append("🏫 Afternoon: Review and light tasks. Focus on organization and small wins.")
-        
-    # Analyze sleep schedule
+    # Morning Logic (4 AM - 12 PM)
+    if current_hour < 12:
+        if sleep_quality and sleep_quality < 3:
+            plan.append("🌅 Morning (Rest of Day): Gentle start recommended. Your sleep quality was low. Focus on organization.")
+        else:
+            plan.append("🌅 Morning (Rest of Day): Focus block! You're well-rested. Tackle your most complex study task now.")
+    
+    # Afternoon Logic (12 PM - 6 PM)
+    if current_hour < 18:
+        if productivity_score > 70:
+            plan.append("🏫 Afternoon: Deep work session. You're in a high productivity cycle. Keep the momentum.")
+        else:
+            plan.append("🏫 Afternoon: Light review. Take a walk outside to reset your focus.")
+
+    # Evening Logic (6 PM - End of Day)
     bedtime_suggestion = "11:00 PM"
     if sleep_bedtime:
         try:
-            # Simple heuristic for bedtime logic
             hour = int(sleep_bedtime.split(':')[0])
             if hour >= 23 or hour < 4:
-                bedtime_suggestion = "10:30 PM (Try sleeping 30 mins earlier than last night)"
-        except:
-            pass
+                bedtime_suggestion = "10:30 PM (Earlier than last night for recovery)"
+        except: pass
             
-    plan.append(f"🌙 Evening: Digital detox at 9 PM. Target sleep at {bedtime_suggestion}.")
+    plan.append(f"🌙 Evening: Digital detox at 9 PM. Aim for sleep at {bedtime_suggestion}.")
     
     return " | ".join(plan)
 
@@ -116,6 +119,36 @@ def predict_burnout(study_hours: float, sleep_hours: float, phone_hours: float, 
     
     # Add personalized plan to suggestions
     personalized_plan = generate_personalized_plan(productivity_score, sleep_hours, sleep_quality, sleep_bedtime)
+    
+    # Combine everything
     final_suggestions = f"{suggestions} || PLAN: {personalized_plan}"
     
     return burnout_risk, productivity_score, final_suggestions
+
+def study_user_trends(history_entries):
+    """
+    Analyzes historical entries to find behavioral patterns.
+    """
+    if not history_entries or len(history_entries) < 3:
+        return "Need more data to study your behavior patterns."
+        
+    trends = []
+    
+    # Check for late sleep trend
+    late_sleeps = [e for e in history_entries if e.sleep_bedtime and (int(e.sleep_bedtime.split(':')[0]) >= 23 or int(e.sleep_bedtime.split(':')[0]) < 4)]
+    if len(late_sleeps) >= 2:
+        avg_stress = sum(e.stress_level for e in late_sleeps) / len(late_sleeps)
+        if avg_stress >= 3.5:
+            trends.append("💡 Behavior Insight: Your stress level spikes significantly on days following late-night bedtimes.")
+
+    # Check for high phone usage trend
+    high_phone = [e for e in history_entries if e.phone_usage_hours > 5]
+    if len(high_phone) >= 2:
+        avg_prod = sum(e.productivity_score for e in high_phone) / len(high_phone)
+        if avg_prod < 50:
+            trends.append("💡 Behavior Insight: High screen time (>5h) consistently drops your productivity below 50%.")
+            
+    if not trends:
+        return "You're maintaining a consistent balance. No negative behavior patterns detected lately."
+        
+    return " ".join(trends)

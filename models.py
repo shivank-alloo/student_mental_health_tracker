@@ -29,6 +29,7 @@ class DailyEntry(Base):
     sleep_bedtime = Column(String) # When the user went to sleep
     sleep_quality = Column(Integer) # Quality score (1-5)
     phone_usage_hours = Column(Float)
+    comment = Column(String) # User notes/comments
     
     # ML Predictions
     burnout_risk = Column(String) # e.g., "High", "Medium", "Low"

@@ -28,6 +28,7 @@ class DailyEntryCreate(BaseModel):
     sleep_bedtime: Optional[str] = None
     sleep_quality: Optional[int] = None
     phone_usage_hours: float
+    comment: Optional[str] = None
 
 class DailyEntryResponse(BaseModel):
     id: int
@@ -39,6 +40,7 @@ class DailyEntryResponse(BaseModel):
     sleep_bedtime: Optional[str] = None
     sleep_quality: Optional[int] = None
     phone_usage_hours: float
+    comment: Optional[str] = None
     burnout_risk: Optional[str] = None
     productivity_score: Optional[float] = None
     suggestions: Optional[str] = None
