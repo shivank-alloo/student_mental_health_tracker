@@ -53,6 +53,14 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
 
 @app.post("/entries/", response_model=schemas.DailyEntryResponse)
 def create_entry(entry: schemas.DailyEntryCreate, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    # Restrict logging to evening/night before sleep (between 8 PM and 4 AM)
+    current_time = datetime.datetime.now()
+    if 4 <= current_time.hour < 20:
+        raise HTTPException(
+            status_code=400, 
+            detail="To maintain data accuracy, please only log your daily data right before sleeping (between 8:00 PM and 4:00 AM)."
+        )
+
     today_start = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = today_start + datetime.timedelta(days=1)
     
