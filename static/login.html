@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - AI Mind Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: var(--bg-color);
+        }
+        .auth-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 400px;
+        }
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .auth-header i {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .switch-auth {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-light);
+            cursor: pointer;
+        }
+        .error-msg {
+            color: var(--red);
+            font-size: 0.85rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="auth-card">
+        <div class="auth-header">
+            <i class="fa-solid fa-brain"></i>
+            <h2>MindPro</h2>
+            <p class="subtitle" id="auth-subtitle">Sign in to your account</p>
+        </div>
+
+        <div id="error-message" class="error-msg hidden">Invalid credentials</div>
+
+        <form id="auth-form" class="auth-form">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" class="form-input" required placeholder="student@university.edu">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="form-input" required placeholder="••••••••">
+            </div>
+
+            <button type="submit" class="btn-primary" id="auth-btn">Sign In</button>
+        </form>
+
+        <div class="switch-auth" id="switch-auth-mode">
+            Don't have an account? <b>Register here</b>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // If already logged in, redirect
+            if (localStorage.getItem('token')) {
+                window.location.href = 'index.html';
+            }
+
+            const API_URL = 'http://localhost:8000';
+            let isLoginMode = true;
+
+            const form = document.getElementById('auth-form');
+            const authBtn = document.getElementById('auth-btn');
+            const authSubtitle = document.getElementById('auth-subtitle');
+            const switchBtn = document.getElementById('switch-auth-mode');
+            const errorMsg = document.getElementById('error-message');
+
+            switchBtn.addEventListener('click', () => {
+                isLoginMode = !isLoginMode;
+                if(isLoginMode) {
+                    authSubtitle.textContent = "Sign in to your account";
+                    authBtn.textContent = "Sign In";
+                    switchBtn.innerHTML = "Don't have an account? <b>Register here</b>";
+                } else {
+                    authSubtitle.textContent = "Create a new account";
+                    authBtn.textContent = "Register";
+                    switchBtn.innerHTML = "Already have an account? <b>Sign in</b>";
+                }
+                errorMsg.classList.add('hidden');
+            });
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                errorMsg.classList.add('hidden');
+                authBtn.disabled = true;
+
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+
+                try {
+                    if (!isLoginMode) {
+                        // Register
+                        const regRes = await fetch(`${API_URL}/register`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email, password })
+                        });
+                        if (!regRes.ok) throw new Error((await regRes.json()).detail || 'Registration failed');
+                    }
+
+                    // Login (either after registration or directly)
+                    const formData = new URLSearchParams();
+                    formData.append('username', email);
+                    formData.append('password', password);
+
+                    const loginRes = await fetch(`${API_URL}/token`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formData
+                    });
+
+                    if (!loginRes.ok) throw new Error('Invalid credentials');
+                    
+                    const data = await loginRes.json();
+                    localStorage.setItem('token', data.access_token);
+                    localStorage.setItem('user_email', email);
+                    
+                    window.location.href = 'index.html';
+
+                } catch (err) {
+                    errorMsg.textContent = err.message;
+                    errorMsg.classList.remove('hidden');
+                } finally {
+                    authBtn.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

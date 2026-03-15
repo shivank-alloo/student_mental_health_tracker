@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Mind Tracker Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Icon font for sidebar -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+</head>
+<body>
+    <script>
+        // Protect the dashboard route immediately
+        if (!localStorage.getItem('token')) {
+            window.location.href = 'login.html';
+        }
+    </script>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-brain" style="color: #00c17c;"></i>
+                <span>MindPro</span>
+            </div>
+            
+            <div class="nav-section">
+                <span class="nav-label">MAIN</span>
+                <nav>
+                    <a href="#" class="nav-link active" data-target="dashboard-view"><i class="fa-solid fa-house"></i> Dashboard</a>
+                    <a href="#" id="open-log-btn"><i class="fa-solid fa-pen-to-square"></i> Log Day</a>
+                    <a href="#" class="nav-link" data-target="routine-view"><i class="fa-solid fa-calendar-check"></i> Routine</a>
+                </nav>
+            </div>
+
+            <div class="nav-section">
+                <span class="nav-label">OTHER</span>
+                <nav>
+                    <a href="#" class="nav-link" data-target="settings-view"><i class="fa-solid fa-gear"></i> Settings</a>
+                    <a href="#" class="nav-link" data-target="help-view"><i class="fa-regular fa-circle-question"></i> Help</a>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="page-title">Home page</div>
+                <div class="user-profile">
+                    <i class="fa-regular fa-bell"></i>
+                    <div class="avatar">👨‍🎓</div>
+                    <span class="user-name" id="display-user-name">Student User</span>
+                    <button id="logout-btn" class="btn-primary-outline" style="padding: 0.25rem 0.75rem; font-size: 0.8rem; margin-left: 1rem;">Logout</button>
+                </div>
+            </header>
+
+            <!-- Scrollable Content: Dashboard -->
+            <div class="view-content active" id="dashboard-view">
+                
+                <!-- Greeting Banner -->
+                <div class="greeting-banner">
+                    Great effort so far! Keep up the hard work, and maintain your sleep schedule to reach full potential!
+                    <button class="close-banner"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <!-- Dashboard Grid -->
+                <div class="dashboard-grid">
+                    
+                    <!-- Top Left: Overall Performance -->
+                    <div class="card performance-card">
+                        <h3>Overall Performance</h3>
+                        <span class="subtitle">Based on historical data</span>
+                        <div class="semi-circle-chart">
+                            <div class="semi-circle-bg"></div>
+                            <div class="semi-circle-fill" id="perf-fill" style="transform: rotate(45deg);"></div>
+                            <div class="semi-circle-inner">
+                                <span class="perf-score" id="perf-score-text">0%</span>
+                                <span class="perf-label">PRODUCTIVITY</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Right: Stat Quick View (2x2 grid) -->
+                    <div class="card stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-icon bg-green-light"><i class="fa-solid fa-book-open" style="color: #00c17c;"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-title">Avg Study</span>
+                                <span class="stat-value" id="avg-study">0h</span>
+                            </div>
+                            <div class="stat-circle border-green" id="study-ring">--</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon bg-orange-light"><i class="fa-solid fa-bed" style="color: #ff9800;"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-title">Avg Sleep</span>
+                                <span class="stat-value" id="avg-sleep">0h</span>
+                            </div>
+                            <div class="stat-circle border-orange" id="sleep-ring">--</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon bg-purple-light"><i class="fa-solid fa-mobile-screen" style="color: #9c27b0;"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-title">Avg Screen</span>
+                                <span class="stat-value" id="avg-phone">0h</span>
+                            </div>
+                            <div class="stat-circle border-purple" id="phone-ring">--</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon bg-blue-light"><i class="fa-solid fa-heart-pulse" style="color: #2196f3;"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-title">Risk Level</span>
+                                <span class="stat-value" id="cur-risk">Low</span>
+                            </div>
+                            <div class="stat-circle border-blue"><i class="fa-solid fa-check"></i></div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Logs (Bottom Left) -->
+                    <div class="card recent-logs-card">
+                        <div class="card-header">
+                            <h3>Recent Logs <span id="log-count">(0)</span></h3>
+                        </div>
+                        
+                        <div class="logs-table-wrapper">
+                            <table class="logs-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Mood</th>
+                                        <th>Productivity</th>
+                                        <th>Risk</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="history-container">
+                                    <!-- Populated by JS -->
+                                    <tr>
+                                        <td colspan="5" class="empty-state">Loading data...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Right Sidebar Widgets -->
+                    <div class="right-widgets">
+                        
+                        <!-- Streak Widget -->
+                        <div class="card streak-card">
+                            <h3>Current Streak</h3>
+                            <p class="streak-text">You've logged <span id="streak-count">0</span> days in a row.</p>
+                            
+                            <div class="streak-days">
+                                <div class="day active"><i class="fa-solid fa-fire text-orange"></i><span>Mon</span></div>
+                                <div class="day active"><i class="fa-solid fa-fire text-orange"></i><span>Tue</span></div>
+                                <div class="day active"><i class="fa-solid fa-fire text-orange"></i><span>Wed</span></div>
+                                <div class="day"><i class="fa-solid fa-fire text-gray"></i><span>Thu</span></div>
+                                <div class="day"><i class="fa-solid fa-fire text-gray"></i><span>Fri</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Action Plan / Suggestions Widget -->
+                        <div class="card action-plan-card">
+                            <h3>AI Action Plan</h3>
+                            
+                            <div class="action-item" id="ai-suggestion-primary">
+                                <div class="ai-icon"><i class="fa-solid fa-robot"></i></div>
+                                <div>
+                                    <h4>Latest Recommendation</h4>
+                                    <p class="suggestion-text">Log a day to see suggestions.</p>
+                                </div>
+                            </div>
+                            
+                            <button class="btn-primary-outline w-100" id="open-log-btn-2">Log Today's Data</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Scrollable Content: Routine View -->
+            <div class="view-content hidden" id="routine-view">
+                <div class="view-header">
+                    <h2>Your ML-Generated Routine</h2>
+                    <p class="subtitle">Based on your latest Burnout Risk and Productivity Analysis (Machine Learning)</p>
+                </div>
+                
+                <div class="routine-list" id="routine-container">
+                    <!-- Populated by JS -->
+                    <div class="empty-state">Load a log to generate an ML routine.</div>
+                </div>
+            </div>
+
+            <!-- Scrollable Content: Settings View -->
+            <div class="view-content hidden" id="settings-view">
+                <div class="view-header">
+                    <h2>Settings & Configuration</h2>
+                    <p class="subtitle">Manage constraints and application preferences</p>
+                </div>
+                
+                <div class="card settings-card">
+                    <div class="settings-group">
+                        <h4>Account Information</h4>
+                        <div class="flex-row">
+                            <label>Name</label>
+                            <input type="text" value="Student User" class="form-input">
+                        </div>
+                        <div class="flex-row">
+                            <label>Email</label>
+                            <input type="email" value="student@university.edu" class="form-input">
+                        </div>
+                    </div>
+                    
+                    <hr class="divider">
+                    
+                    <div class="settings-group">
+                        <h4>Preferences</h4>
+                        <div class="toggle-row">
+                            <span>Enable Notifications (Web)</span>
+                            <label class="switch">
+                                <input type="checkbox" checked>
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <div class="toggle-row">
+                            <span>Strict Study Caps (Max 10hrs)</span>
+                            <label class="switch">
+                                <input type="checkbox">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <div class="toggle-row">
+                            <span>Dark Mode (Coming Soon)</span>
+                            <label class="switch">
+                                <input type="checkbox" disabled>
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-primary" style="width: auto;">Save Changes</button>
+                </div>
+            </div>
+
+            <!-- Scrollable Content: Help View -->
+            <div class="view-content hidden" id="help-view">
+                <div class="view-header">
+                    <h2>Help & Support Center</h2>
+                    <p class="subtitle">Find answers or contact an academic counselor.</p>
+                </div>
+                
+                <div class="search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Search for help... (e.g. 'How is Burnout calculated?')">
+                </div>
+                
+                <div class="faq-grid">
+                    <div class="faq-card">
+                        <h5><i class="fa-solid fa-brain text-blue"></i> How does the ML model work?</h5>
+                        <p>We use a Scikit-Learn RandomForestClassifier trained on simulated student lifestyle data to predict burnout likelihood.</p>
+                    </div>
+                    <div class="faq-card">
+                        <h5><i class="fa-solid fa-user-shield text-green"></i> Is my data private?</h5>
+                        <p>Yes, all your logs are saved locally in a SQLite database file (`mental_health.db`). It is not sent to external servers.</p>
+                    </div>
+                    <div class="faq-card">
+                        <h5><i class="fa-solid fa-stopwatch text-orange"></i> Why did my productivity drop?</h5>
+                        <p>Typically, study sessions longer than 8 hours without adequate sleep result in strongly penalized productivity scores to encourage breaks.</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Log Modal -->
+    <div class="modal-overlay hidden" id="log-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>Log Today's Reality</h2>
+                <button class="close-modal" id="close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <form id="tracker-form">
+                <div class="form-group mood-selector">
+                    <label>How's your mood?</label>
+                    <div class="emoji-group">
+                        <input type="radio" id="mood-bad" name="mood" value="bad" required>
+                        <label for="mood-bad" class="emoji-btn">😫</label>
+
+                        <input type="radio" id="mood-ok" name="mood" value="ok" checked>
+                        <label for="mood-ok" class="emoji-btn">😐</label>
+
+                        <input type="radio" id="mood-great" name="mood" value="great">
+                        <label for="mood-great" class="emoji-btn">🚀</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="study-hours">Study Hours</label>
+                    <input type="number" id="study-hours" min="0" max="24" step="0.5" placeholder="e.g. 4.5" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="sleep-hours">Sleep Hours</label>
+                    <input type="number" id="sleep-hours" min="0" max="24" step="0.5" placeholder="e.g. 7" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone-hours">Phone Screen Time (Hrs)</label>
+                    <input type="number" id="phone-hours" min="0" max="24" step="0.5" placeholder="e.g. 3" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="stress-level">Stress Level (1-5)</label>
+                    <input type="number" id="stress-level" min="1" max="5" step="1" placeholder="e.g. 3" required>
+                </div>
+
+                <button type="submit" class="btn-primary" id="analyze-btn">
+                    <span>Submit & Analyze</span>
+                    <div class="loader hidden"></div>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
