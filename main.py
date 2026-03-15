@@ -78,7 +78,9 @@ def create_entry(entry: schemas.DailyEntryCreate, db: Session = Depends(get_db),
         entry.sleep_hours,
         entry.phone_usage_hours,
         entry.stress_level,
-        entry.mood
+        entry.mood,
+        entry.sleep_bedtime,
+        entry.sleep_quality
     )
 
     db_entry = models.DailyEntry(

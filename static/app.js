@@ -133,6 +133,8 @@ document.addEventListener('DOMContentLoaded', () => {
             mood: document.querySelector('input[name="mood"]:checked').value,
             study_hours: parseFloat(document.getElementById('study-hours').value),
             sleep_hours: parseFloat(document.getElementById('sleep-hours').value),
+            sleep_bedtime: document.getElementById('sleep-bedtime').value,
+            sleep_quality: parseInt(document.getElementById('sleep-quality').value, 10),
             phone_usage_hours: parseFloat(document.getElementById('phone-hours').value),
             stress_level: parseInt(document.getElementById('stress-level').value, 10)
         };
@@ -350,7 +352,32 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
 
-        routineContainer.innerHTML = routineHTML;
+        // Parse the personalized plan if it exists
+        let planHTML = '';
+        if (latest.suggestions.includes('|| PLAN:')) {
+            const parts = latest.suggestions.split('|| PLAN:');
+            const suggestions = parts[0].trim();
+            const planSteps = parts[1].trim().split('|');
+            
+            planHTML = `
+                <div class="card plan-card" style="margin-top: 20px; background: #e3f2fd; border: none;">
+                    <h4 style="color: #1976d2; margin-bottom: 12px;"><i class="fa-solid fa-sparkles"></i> AI Personalized Routine</h4>
+                    <div class="plan-steps">
+                        ${planSteps.map(step => `
+                            <div class="plan-step" style="display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start;">
+                                <div class="step-bullet" style="color: #1976d2; font-weight: bold;">•</div>
+                                <p style="font-size: 0.95rem; line-height: 1.4;">${step.trim()}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            // Update the suggestion text in the header to just show the core tips
+            suggestionText.textContent = suggestions;
+        }
+
+        routineContainer.innerHTML = routineHTML + planHTML;
     }
 
     // Number Anim util

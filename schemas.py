@@ -25,6 +25,8 @@ class DailyEntryCreate(BaseModel):
     stress_level: int
     study_hours: float
     sleep_hours: float
+    sleep_bedtime: Optional[str] = None
+    sleep_quality: Optional[int] = None
     phone_usage_hours: float
 
 class DailyEntryResponse(BaseModel):
@@ -34,6 +36,8 @@ class DailyEntryResponse(BaseModel):
     stress_level: int
     study_hours: float
     sleep_hours: float
+    sleep_bedtime: Optional[str] = None
+    sleep_quality: Optional[int] = None
     phone_usage_hours: float
     burnout_risk: Optional[str] = None
     productivity_score: Optional[float] = None

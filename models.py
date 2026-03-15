@@ -26,6 +26,8 @@ class DailyEntry(Base):
     stress_level = Column(Integer) # Perceived stress (1 to 5)
     study_hours = Column(Float)
     sleep_hours = Column(Float)
+    sleep_bedtime = Column(String) # When the user went to sleep
+    sleep_quality = Column(Integer) # Quality score (1-5)
     phone_usage_hours = Column(Float)
     
     # ML Predictions
