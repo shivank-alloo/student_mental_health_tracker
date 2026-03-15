@@ -107,6 +107,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`${API_URL}/entries/insights`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            if (response.status === 401) {
+                localStorage.removeItem('token');
+                window.location.href = 'login.html';
+                return;
+            }
             if (response.ok) {
                 const data = await response.json();
                 document.getElementById('insights-container').innerHTML = `<p class="suggestion-text">${data.insights}</p>`;
@@ -123,6 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             if (response.status === 401) {
+                localStorage.removeItem('token');
                 window.location.href = 'login.html';
                 return;
             }
